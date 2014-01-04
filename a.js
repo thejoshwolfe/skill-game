@@ -40,11 +40,12 @@ function physicsStep() {
   }
   var startingPoint = canvas.height - boxSize / 2;
   var spawnThreshold = startingPoint - boxSize / 2;
-  if (lastBox == null || lastBox.y <= spawnThreshold) {
+  while (lastBox == null || lastBox.y <= spawnThreshold) {
     var possibleLetters = letters;
     if (lastBox != null) {
       possibleLetters = letters.slice(0);
       possibleLetters.splice(lastBox.index, 1);
+      startingPoint = lastBox.y + boxSize / 2;
     }
     var letter = possibleLetters[Math.floor(Math.random() * possibleLetters.length)];
     var index = letters.indexOf(letter);
@@ -53,6 +54,7 @@ function physicsStep() {
       y: startingPoint,
     };
     boxes.push(box);
+    lastBox = box;
   }
 }
 function render() {

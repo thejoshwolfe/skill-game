@@ -94,16 +94,23 @@ function render() {
 document.onkeydown = keyDown;
 function keyDown(event) {
   var key = String.fromCharCode(event.which);
+  if ("ABCDEFGHIJKLMNOPQRSTUVWXYZ".indexOf(key) === -1) {
+    // gotta be letters
+    return;
+  }
   if (letters.length < 4) {
     // setup
     if (letters.filter(function(c) { return key === c; }).length === 0) {
       letters.push(key);
     }
+    event.preventDefault();
     return;
   }
 
   var index = letters.indexOf(key);
   if (index === -1) return;
+  // it's a real button
+  event.preventDefault();
   if (boxes.length === 0) return;
   var box = boxes[0];
   if (box.index === index) {

@@ -121,6 +121,8 @@ function keyDown(event) {
     scoreSpan.innerHTML = score;
   } else {
     // mistake!
-    boxSpeed += 0.01;
+    boxes.forEach(function(box) {
+      box.y -= boxSize / 2;
+    });
   }
 }

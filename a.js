@@ -18,6 +18,7 @@ function update() {
   render();
   requestAnimationFrame(update);
 }
+var defaultStartingPoint = canvas.height - boxSize / 2;
 var lastPhysicsTime = new Date();
 function physicsStep() {
   var now = new Date();
@@ -29,6 +30,7 @@ function physicsStep() {
     box.y -= dt * boxSpeed;
   });
   var lastBox = null;
+  var startingPoint = defaultStartingPoint;
   if (boxes.length > 0) {
     var firstBox = boxes[0];
     if (firstBox.y <= boxSize) {
@@ -36,27 +38,59 @@ function physicsStep() {
       reset();
       return;
     }
-    lastBox = boxes[boxes.length - 1];
-  }
-  var startingPoint = canvas.height - boxSize / 2;
-  var spawnThreshold = startingPoint - boxSize / 2;
-  while (lastBox == null || lastBox.y <= spawnThreshold) {
-    var possibleLetters = letters;
-    if (lastBox != null) {
-      possibleLetters = letters.slice(0);
-      possibleLetters.splice(lastBox.index, 1);
-      startingPoint = lastBox.y + boxSize / 2;
+    if (firstBox.y >= defaultStartingPoint) {
+      // scoot the out of sight boxes into view.
+      var delta = firstBox.y - defaultStartingPoint;
+      boxes.forEach(function(box) {
+        box.y -= delta;
+      });
     }
-    var letter = possibleLetters[Math.floor(Math.random() * possibleLetters.length)];
-    var index = letters.indexOf(letter);
-    box = {
-      index: index,
-      y: startingPoint,
-    };
-    boxes.push(box);
-    lastBox = box;
+    lastBox = boxes[boxes.length - 1];
+    startingPoint = lastBox.y + boxSize / 2;
+  }
+  while (lastBox == null || lastBox.y < canvas.height) {
+    generateRun().forEach(function(index) {
+      var box = {
+        index: index,
+        y: startingPoint,
+      };
+      boxes.push(box);
+      lastBox = box;
+      startingPoint += boxSize / 2;
+    });
   }
 }
+function breakBox() {
+  boxes.splice(0, 1);
+  boxSpeed += 0.001;
+  score += 1;
+  scoreSpan.innerHTML = score;
+}
+function mistake() {
+  boxes.forEach(function(box) {
+    box.y -= boxSize / 2;
+  });
+}
+
+var lastIndex = randInt(4);
+function generateRun() {
+  function getNextIndex(distance) {
+    var delta = (randInt(2) - 0.5) * 2 * distance;
+    lastIndex = lastIndex + delta;
+    if (lastIndex < 0) lastIndex += 2 * distance;
+    if (lastIndex >= 4) lastIndex -= 2 * distance;
+    return lastIndex;
+  }
+  var result = [];
+  // jump
+  result.push(getNextIndex(2));
+  // and then wiggle
+  for (var i = 0; i < randInt(3) + 2; i++) {
+    result.push(getNextIndex(1));
+  }
+  return result;
+}
+
 function render() {
   var context = canvas.getContext("2d");
   context.fillStyle = "#000";
@@ -92,7 +126,6 @@ function render() {
   });
 }
 
-
 document.onkeydown = keyDown;
 function keyDown(event) {
   var key = String.fromCharCode(event.which);
@@ -116,15 +149,12 @@ function keyDown(event) {
   if (boxes.length === 0) return;
   var box = boxes[0];
   if (box.index === index) {
-    // bam!
-    boxes.splice(0, 1);
-    boxSpeed += 0.001;
-    score += 1;
-    scoreSpan.innerHTML = score;
+    breakBox();
   } else {
-    // mistake!
-    boxes.forEach(function(box) {
-      box.y -= boxSize / 2;
-    });
+    mistake();
   }
+}
+
+function randInt(n) {
+  return Math.floor(Math.random() * n);
 }
